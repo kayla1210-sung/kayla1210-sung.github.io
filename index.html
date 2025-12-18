@@ -29,10 +29,12 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const TILE = 16;
 let currentMap = "hall";
+let walkingFrames = 0; // 玩家行走動畫
+let npcWalkingFrames = 0; // NPC 行走動畫
 
 /* ===== 地圖設計 ===== */
 const maps = {
-  hall:[
+  hall: [
     "####################",
     "#.................>#",
     "#..######..........#",
@@ -41,7 +43,7 @@ const maps = {
     "#..................#",
     "####################"
   ],
-  corridor:[
+  corridor: [
     "####################",
     "#<.................#",
     "#.......#..........#",
@@ -50,7 +52,7 @@ const maps = {
     "#........>.........#",
     "####################"
   ],
-  library:[
+  library: [
     "####################",
     "#........>.........#",
     "#..####....####....#",
@@ -59,7 +61,7 @@ const maps = {
     "#..................#",
     "####################"
   ],
-  garden:[
+  garden: [
     "####################",
     "#<.................#",
     "#......##..........#",
@@ -68,7 +70,7 @@ const maps = {
     "#........>.........#",
     "####################"
   ],
-  treasure:[
+  treasure: [
     "####################",
     "#<.................#",
     "#......####........#",
@@ -79,142 +81,179 @@ const maps = {
   ]
 };
 
-/* ===== 玩家 ===== */
-const player = { x:TILE*2, y:TILE*2, w:12, h:12, dir:"down", moving:false };
+/* ===== 玩家設定 ===== */
+const player = {
+  x: TILE * 2, y: TILE * 2, w: 12, h: 12, dir: "down", moving: false, frame: 0
+};
 
-/* ===== NPC ===== */
-const npcs=[
-  {x:TILE*10,y:TILE*2,msg:["你好，我是守衛"],room:"hall"},
-  {x:TILE*5,y:TILE*3,msg:["歡迎來到書房"],room:"library"},
-  {x:TILE*3,y:TILE*2,msg:["庭院裡的花真漂亮"],room:"garden"},
-  {x:TILE*6,y:TILE*2,msg:["寶庫裡藏有寶物"],room:"treasure"}
+/* ===== NPC 設定 ===== */
+const npcs = [
+  { x: TILE * 10, y: TILE * 2, msg: ["你好，我是守衛"], room: "hall", dir: "right", walking: true },
+  { x: TILE * 5, y: TILE * 3, msg: ["歡迎來到書房"], room: "library", dir: "left", walking: true },
+  { x: TILE * 3, y: TILE * 2, msg: ["庭院裡的花真漂亮"], room: "garden", dir: "right", walking: true },
+  { x: TILE * 6, y: TILE * 2, msg: ["寶庫裡藏有寶物"], room: "treasure", dir: "left", walking: true }
 ];
 
-/* ===== 物件 ===== */
-const items=[
-  {x:TILE*5,y:TILE*2,msg:"這是一本古老的書",room:"hall"},
-  {x:TILE*6,y:TILE*3,msg:"打開了！裡面有金幣",room:"treasure"}
+/* ===== 物件設定 ===== */
+const items = [
+  { x: TILE * 5, y: TILE * 2, msg: "這是一本古老的書", room: "hall" },
+  { x: TILE * 6, y: TILE * 3, msg: "打開了！裡面有金幣", room: "treasure" },
+  { x: TILE * 8, y: TILE * 4, msg: "一張古老的桌子", room: "library" }
 ];
 
 /* ===== 對話框 ===== */
 const dialog = document.getElementById("dialog");
 
-/* ===== 鍵盤 ===== */
+/* ===== 鍵盤事件 ===== */
 const keys = {};
-window.addEventListener("keydown", e=>keys[e.key]=true);
-window.addEventListener("keyup", e=>keys[e.key]=false);
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
 
 /* ===== 主迴圈 ===== */
-function loop(){update();draw();requestAnimationFrame(loop);}
+function loop() { update(); draw(); requestAnimationFrame(loop); }
 
-/* ===== 更新 ===== */
-function update(){
-  let nx=player.x, ny=player.y; player.moving=false;
-  if(keys["ArrowUp"]||keys["w"]){ny-=1; player.dir="up"; player.moving=true;}
-  if(keys["ArrowDown"]||keys["s"]){ny+=1; player.dir="down"; player.moving=true;}
-  if(keys["ArrowLeft"]||keys["a"]){nx-=1; player.dir="left"; player.moving=true;}
-  if(keys["ArrowRight"]||keys["d"]){nx+=1; player.dir="right"; player.moving=true;}
-  if(!isWall(nx,ny)) player.x=nx, player.y=ny;
-  checkExit(); checkInteractions();
+/* ===== 更新玩家狀態 ===== */
+function update() {
+  let nx = player.x, ny = player.y;
+  player.moving = false;
+
+  if (keys["ArrowUp"] || keys["w"]) { ny -= 1; player.dir = "up"; player.moving = true; }
+  if (keys["ArrowDown"] || keys["s"]) { ny += 1; player.dir = "down"; player.moving = true; }
+  if (keys["ArrowLeft"] || keys["a"]) { nx -= 1; player.dir = "left"; player.moving = true; }
+  if (keys["ArrowRight"] || keys["d"]) { nx += 1; player.dir = "right"; player.moving = true; }
+
+  if (!isWall(nx, ny)) player.x = nx, player.y = ny;
+  checkExit();
+  checkInteractions();
+
+  // 玩家行走動畫
+  if (player.moving) walkingFrames++;
+  if (walkingFrames > 10) {
+    player.frame = (player.frame + 1) % 4;
+    walkingFrames = 0;
+  }
+
+  // NPC 行走動畫
+  npcs.forEach(npc => {
+    if (npc.walking) {
+      npcWalkingFrames++;
+      if (npcWalkingFrames > 20) {
+        npc.frame = (npc.frame + 1) % 4;
+        npcWalkingFrames = 0;
+      }
+      if (npc.dir === "right") npc.x += 1;
+      if (npc.dir === "left") npc.x -= 1;
+      if (npc.x > TILE * 10) npc.dir = "left";
+      if (npc.x < TILE * 5) npc.dir = "right";
+    }
+  });
 }
 
-/* ===== 判斷牆 ===== */
-function isWall(x,y){
-  const map=maps[currentMap];
-  const left=Math.floor(x/TILE), right=Math.floor((x+player.w-1)/TILE);
-  const top=Math.floor(y/TILE), bottom=Math.floor((y+player.h-1)/TILE);
-  for(let ty=top;ty<=bottom;ty++)
-    for(let tx=left;tx<=right;tx++)
-      if(map[ty] && map[ty][tx]==="#") return true;
+/* ===== 判斷牆壁 ===== */
+function isWall(x, y) {
+  const map = maps[currentMap];
+  const left = Math.floor(x / TILE), right = Math.floor((x + player.w - 1) / TILE);
+  const top = Math.floor(y / TILE), bottom = Math.floor((y + player.h - 1) / TILE);
+  for (let ty = top; ty <= bottom; ty++) {
+    for (let tx = left; tx <= right; tx++) {
+      if (map[ty] && map[ty][tx] === "#") return true;
+    }
+  }
   return false;
 }
 
-/* ===== 出入口 ===== */
-function checkExit(){
-  const map=maps[currentMap]; 
-  const tx=Math.floor(player.x/TILE); 
-  const ty=Math.floor(player.y/TILE);
-  const tile=map[ty][tx];
-  if(tile==">"){
-    if(currentMap==="hall") currentMap="corridor", player.x=TILE*2;
-    else if(currentMap==="library") currentMap="garden", player.x=TILE*2;
-    else if(currentMap==="corridor") currentMap="library", player.x=TILE*2;
-    else if(currentMap==="garden") currentMap="treasure", player.x=TILE*2;
+/* ===== 出入口判斷 ===== */
+function checkExit() {
+  const map = maps[currentMap];
+  const tx = Math.floor(player.x / TILE);
+  const ty = Math.floor(player.y / TILE);
+  const tile = map[ty][tx];
+  if (tile === ">") {
+    if (currentMap === "hall") currentMap = "corridor", player.x = TILE * 2;
+    else if (currentMap === "library") currentMap = "garden", player.x = TILE * 2;
+    else if (currentMap === "corridor") currentMap = "library", player.x = TILE * 2;
+    else if (currentMap === "garden") currentMap = "treasure", player.x = TILE * 2;
   }
-  if(tile=="<"){
-    if(currentMap==="corridor") currentMap="hall", player.x=TILE*17;
-    else if(currentMap==="library") currentMap="corridor", player.x=TILE*17;
-    else if(currentMap==="garden") currentMap="library", player.x=TILE*17;
-    else if(currentMap==="treasure") currentMap="garden", player.x=TILE*17;
+  if (tile === "<") {
+    if (currentMap === "corridor") currentMap = "hall", player.x = TILE * 17;
+    else if (currentMap === "library") currentMap = "corridor", player.x = TILE * 17;
+    else if (currentMap === "garden") currentMap = "library", player.x = TILE * 17;
+    else if (currentMap === "treasure") currentMap = "garden", player.x = TILE * 17;
   }
 }
 
 /* ===== 互動判斷 ===== */
-function checkInteractions(){
-  let triggered=false;
-  npcs.forEach(npc=>{
-    if(npc.room!==currentMap) return;
-    if(Math.abs(player.x-npc.x)<16 && Math.abs(player.y-npc.y)<16 && keys[" "]){
-      dialog.style.display="block"; dialog.innerText=npc.msg[0]; triggered=true;
+function checkInteractions() {
+  let triggered = false;
+  npcs.forEach(npc => {
+    if (npc.room !== currentMap) return;
+    if (Math.abs(player.x - npc.x) < 16 && Math.abs(player.y - npc.y) < 16 && keys[" "]) {
+      dialog.style.display = "block"; dialog.innerText = npc.msg[0]; triggered = true;
     }
   });
-  items.forEach(it=>{
-    if(it.room!==currentMap) return;
-    if(Math.abs(player.x-it.x)<16 && Math.abs(player.y-it.y)<16 && keys[" "]){
-      dialog.style.display="block"; dialog.innerText=it.msg; triggered=true;
+  items.forEach(it => {
+    if (it.room !== currentMap) return;
+    if (Math.abs(player.x - it.x) < 16 && Math.abs(player.y - it.y) < 16 && keys[" "]) {
+      dialog.style.display = "block"; dialog.innerText = it.msg; triggered = true;
     }
   });
-  if(!triggered) dialog.style.display="none";
+  if (!triggered) dialog.style.display = "none";
 }
 
-/* ===== 繪製 ===== */
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+/* ===== 繪製遊戲畫面 ===== */
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawMap();
   drawItems();
   drawNPCs();
   drawPlayer();
 }
 
-function drawMap(){
-  const map=maps[currentMap];
-  for(let y=0;y<map.length;y++){
-    for(let x=0;x<map[y].length;x++){
-      const tile=map[y][x];
-      if(tile==="#"){ctx.fillStyle="#444"; ctx.fillRect(x*TILE,y*TILE,TILE,TILE);}
-      else if(tile==">"||tile=="<"){ctx.fillStyle="#ff0"; ctx.fillRect(x*TILE,y*TILE,TILE,TILE);}
-      else{ctx.fillStyle="#ccc"; ctx.fillRect(x*TILE,y*TILE,TILE,TILE);}
+/* ===== 繪製地圖 ===== */
+function drawMap() {
+  const map = maps[currentMap];
+  for (let y = 0; y < map.length; y++) {
+    for (let x = 0; x < map[y].length; x++) {
+      const tile = map[y][x];
+      if (tile === "#") { ctx.fillStyle = "#444"; ctx.fillRect(x * TILE, y * TILE, TILE, TILE); }
+      else if (tile === ">" || tile === "<") { ctx.fillStyle = "#ff0"; ctx.fillRect(x * TILE, y * TILE, TILE, TILE); }
+      else { ctx.fillStyle = "#ccc"; ctx.fillRect(x * TILE, y * TILE, TILE, TILE); }
     }
   }
 }
 
-function drawItems(){
-  items.forEach(it=>{
-    if(it.room!==currentMap) return;
-    ctx.fillStyle="#b5651d"; ctx.fillRect(it.x,it.y,TILE,TILE);
-    ctx.fillStyle="#ff0"; ctx.fillRect(it.x+4,it.y+4,4,4);
+/* ===== 繪製物件 ===== */
+function drawItems() {
+  items.forEach(it => {
+    if (it.room !== currentMap) return;
+    ctx.fillStyle = "#b5651d"; ctx.fillRect(it.x, it.y, TILE, TILE);
+    ctx.fillStyle = "#ff0"; ctx.fillRect(it.x + 4, it.y + 4, 4, 4); 
   });
 }
 
-function drawNPCs(){
-  npcs.forEach(npc=>{
-    if(npc.room!==currentMap) return;
-    ctx.fillStyle="#00f";
-    ctx.fillRect(npc.x,npc.y,12,12);
-    ctx.fillStyle="#fff";
-    ctx.fillRect(npc.x+3,npc.y+3,2,2);
-    ctx.fillRect(npc.x+7,npc.y+3,2,2);
+/* ===== 繪製 NPC ===== */
+function drawNPCs() {
+  npcs.forEach(npc => {
+    if (npc.room !== currentMap) return;
+    ctx.fillStyle = "#00f"; // NPC 藍色
+    ctx.fillRect(npc.x, npc.y, 12, 12);
+    ctx.fillStyle = "#fff"; // NPC 白眼睛
+    ctx.fillRect(npc.x + 3, npc.y + 3, 2, 2);
+    ctx.fillRect(npc.x + 7, npc.y + 3, 2, 2);
   });
 }
 
-function drawPlayer(){
-  ctx.fillStyle="#f00";
-  ctx.fillRect(player.x,player.y,12,12);
-  ctx.fillStyle="#fff";
-  ctx.fillRect(player.x+3,player.y+3,2,2);
-  ctx.fillRect(player.x+7,player.y+3,2,2);
-  ctx.fillStyle="#000";
-  ctx.fillRect(player.x+2,player.y,8,2);
+/* ===== 繪製玩家 ===== */
+function drawPlayer() {
+  ctx.fillStyle = "#f00"; // 玩家紅色衣服
+  ctx.fillRect(player.x, player.y, 12, 12);
+
+  ctx.fillStyle = "#fff"; // 玩家白眼睛
+  ctx.fillRect(player.x + 3, player.y + 3, 2, 2);
+  ctx.fillRect(player.x + 7, player.y + 3, 2, 2);
+
+  ctx.fillStyle = "#000"; // 玩家黑帽子
+  ctx.fillRect(player.x + 2, player.y, 8, 2);
 }
 
 loop();
