@@ -1,288 +1,153 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>RPG 角色個人網站｜你的名字</title>
-  <style>
-    :root{
-      --bg:#0f1724; --card:#0b1220; --accent:#7c3aed; --muted:#9aa4b2; --glass: rgba(255,255,255,0.03);
-      --glass-2: rgba(255,255,255,0.04);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background: linear-gradient(180deg,#071026 0%, #0f1724 100%); color:#e6eef6}
-    a{color:inherit}
-    .app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
-
-    /* Intro overlay */
-    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:50}
-    .intro{width:92%;max-width:980px;background:linear-gradient(180deg,rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:14px;padding:28px;box-shadow:0 12px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px)}
-    .title-row{display:flex;align-items:center;gap:18px}
-    .logo{width:86px;height:86px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#2dd4bf);display:flex;align-items:center;justify-content:center;font-weight:700;color:#041025;font-size:28px}
-    h1{margin:0;font-size:24px}
-    p.lead{margin:6px 0 14px;color:var(--muted)}
-    .btn-row{display:flex;gap:12px;margin-top:12px}
-    .btn{background:linear-gradient(180deg,var(--accent),#5b21b6);border:none;color:white;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-
-    /* Main layout */
-    .layout{display:grid;grid-template-columns:320px 1fr;gap:20px;width:100%;max-width:1200px}
-    .panel{background:var(--card);border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.02);box-shadow:0 6px 20px rgba(2,6,23,0.5)}
-    .left .avatar{width:100%;border-radius:10px;padding:18px;background:linear-gradient(180deg,var(--glass),var(--glass-2));display:flex;flex-direction:column;align-items:center;gap:12px}
-    .avatar .char{width:160px;height:160px;border-radius:12px;background:linear-gradient(135deg,#18202b,#082033);display:flex;align-items:center;justify-content:center;font-size:72px}
-    .stat-list{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px}
-    .stat{display:flex;justify-content:space-between;align-items:center}
-    .hp{color:#ffb4b4}
-
-    .skills{margin-top:12px}
-    .skill{margin-bottom:10px}
-    .skill .bar{height:10px;background:rgba(255,255,255,0.04);border-radius:999px;overflow:hidden}
-    .skill .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#06b6d4);width:0%;}
-    .skill .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
-
-    .right .hero-top{display:flex;gap:14px;align-items:flex-start}
-    .card{flex:1;padding:14px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:10px}
-    .bio{line-height:1.45;color: #d7e6f9}
-
-    .quests{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .quest{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
-    .quest.locked{opacity:0.6}
-
-    /* Works gallery */
-    .works{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:12px}
-    .work{height:120px;border-radius:8px;background:linear-gradient(135deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));display:flex;flex-direction:column;justify-content:center;align-items:center;padding:10px;text-align:center;cursor:pointer}
-
-    /* footer */
-    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
-
-    /* Modal */
-    .modal-back{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.6),rgba(2,6,23,0.85));display:none;align-items:center;justify-content:center;z-index:80}
-    .modal{width:92%;max-width:760px;background:linear-gradient(180deg,#051227,#081227);border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,0.03)}
-    .close{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;color:var(--muted);cursor:pointer}
-
-    /* small */
-    @media (max-width:880px){.layout{grid-template-columns:1fr}.left{order:2}.right{order:1}}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>像素城堡遊戲</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="overlay" id="intro">
-    <div class="intro">
-      <div class="title-row">
-        <div class="logo">RPG</div>
-        <div style="flex:1">
-          <h1>成為主角：你的名字 — RPG 風個人網站</h1>
-          <p class="lead">把你的經歷、技能用遊戲化方式展示。點擊「Start Adventure」開始互動體驗！</p>
-          <div class="btn-row">
-            <button class="btn" id="startBtn">Start Adventure</button>
-            <button class="btn ghost" id="demoBtn">快速示範</button>
-          </div>
+    <header>
+        <h1>像素城堡探索遊戲</h1>
+        <p>自由探索城堡中的每個房間，玩小遊戲，創作畫作！</p>
+    </header>
+
+    <div id="game-container">
+        <!-- 遊戲畫布 -->
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="controls">
+            <button onclick="startGame()">開始遊戲</button>
+            <button onclick="clearCanvas()">清除畫布</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <main class="app">
-    <div class="layout">
-      <aside class="panel left">
-        <div class="avatar">
-          <div class="char" id="charEmoji">🛡️</div>
-          <div style="text-align:center"><strong id="playerName">你的名字</strong><div style="font-size:13px;color:var(--muted)">RPG 學生 / 前端冒險者</div></div>
+    <footer>
+        <p>© 2025 像素遊戲工作室</p>
+    </footer>
 
-          <div class="stat-list">
-            <div class="stat"><span>HP</span><span class="hp">120 / 120</span></div>
-            <div class="stat"><span>EXP</span><span id="expText">Lv. 5 · 230 XP</span></div>
-            <div class="stat"><span>職業</span><span id="classText">前端騎士</span></div>
-          </div>
-
-          <div class="skills">
-            <div class="skill">
-              <div class="meta"><span>HTML</span><span>80%</span></div>
-              <div class="bar"><i style="width:80%"></i></div>
-            </div>
-            <div class="skill">
-              <div class="meta"><span>CSS</span><span>72%</span></div>
-              <div class="bar"><i style="width:72%"></i></div>
-            </div>
-            <div class="skill">
-              <div class="meta"><span>JavaScript</span><span>68%</span></div>
-              <div class="bar"><i style="width:68%"></i></div>
-            </div>
-            <div class="skill">
-              <div class="meta"><span>Creativity</span><span>95%</span></div>
-              <div class="bar"><i style="width:95%"></i></div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button class="btn" id="editBtn" style="flex:1">Customize</button>
-          <button class="btn ghost" id="downloadBtn">Download CV</button>
-        </div>
-      </aside>
-
-      <section class="panel right">
-        <div class="hero-top">
-          <div class="card">
-            <h3>關於我</h3>
-            <p class="bio">你好，我是 <strong id="bioName">你的名字</strong>，喜歡把學校作業變成有趣的東西。我的專長是將介面設計與互動程式結合，讓網頁具有故事感與可玩性。</p>
-            <div style="margin-top:8px;color:var(--muted);font-size:13px">最後更新：<span id="lastUpdate">2025-12-04</span></div>
-          </div>
-
-          <div style="width:240px;display:flex;flex-direction:column;gap:10px">
-            <div class="card">
-              <h4>當前任務</h4>
-              <div id="currentQuest">完成期末報告 — <em>進行中</em></div>
-            </div>
-            <div class="card">
-              <h4>物品欄</h4>
-              <div style="font-size:14px;color:var(--muted)">小工具：VSCode, Git, Chrome DevTools</div>
-            </div>
-          </div>
-        </div>
-
-        <h3 style="margin-top:16px">任務 & 支線</h3>
-        <div class="quests" id="quests">
-          <div class="quest" data-id="1">主線：製作期末個人網站 <div style="font-size:12px;color:var(--muted)">獎勵：+200 XP</div></div>
-          <div class="quest" data-id="2">支線：完成履歷頁面 <div style="font-size:12px;color:var(--muted)">獎勵：+80 XP</div></div>
-          <div class="quest locked" data-id="3">隱藏任務：解鎖彩蛋 <div style="font-size:12px;color:var(--muted)">條件：通關小遊戲</div></div>
-        </div>
-
-        <h3 style="margin-top:16px">作品展示</h3>
-        <div class="works" id="works">
-          <div class="work" data-title="作品 A" data-desc="說明：這是期中專案的展示。">作品 A</div>
-          <div class="work" data-title="作品 B" data-desc="說明：做過的互動小遊戲。">作品 B</div>
-          <div class="work" data-title="作品 C" data-desc="說明：練習作品集與 UI。">作品 C</div>
-          <div class="work" data-title="作品 D" data-desc="說明：其他視覺稿。">作品 D</div>
-        </div>
-
-        <footer>這個網站是期末報告示範 — 你可以自由修改文字與數值。</footer>
-      </section>
-    </div>
-  </main>
-
-  <!-- Modal -->
-  <div class="modal-back" id="modal">
-    <div class="modal" role="dialog" aria-modal="true">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <strong id="modalTitle">作品標題</strong>
-        <button class="close" id="closeModal">Close</button>
-      </div>
-      <div id="modalBody">內容描述</div>
-    </div>
-  </div>
-
-  <script>
-    // Basic interactivity
-    const intro = document.getElementById('intro');
-    const startBtn = document.getElementById('startBtn');
-    const demoBtn = document.getElementById('demoBtn');
-    const quests = document.getElementById('quests');
-    const works = document.getElementById('works');
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const closeModal = document.getElementById('closeModal');
-    const playerName = document.getElementById('playerName');
-    const bioName = document.getElementById('bioName');
-    const charEmoji = document.getElementById('charEmoji');
-    const editBtn = document.getElementById('editBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-
-    // Helper: simple prompt-based customization
-    editBtn.addEventListener('click', ()=>{
-      const name = prompt('輸入你的名字', playerName.textContent) || playerName.textContent;
-      playerName.textContent = name; bioName.textContent = name;
-      const emoji = prompt('輸入一個表情符號作為角色', '🛡️') || '🛡️';
-      charEmoji.textContent = emoji;
-    });
-
-    downloadBtn.addEventListener('click', ()=>{
-      const cv = `履歷 - ${playerName.textContent}\n職業: 前端騎士\n技能: HTML, CSS, JS`;
-      const blob = new Blob([cv], {type:'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `${playerName.textContent}_CV.txt`;
-      a.click(); URL.revokeObjectURL(url);
-    });
-
-    // Start button
-    startBtn.addEventListener('click', ()=>{
-      intro.style.display = 'none';
-      // little reveal animation
-      document.querySelectorAll('.panel').forEach((p,i)=>{p.style.transform='translateY(8px)';p.style.transition='all .6s ease '+(i*0.05)+'s';p.style.opacity=1;});
-    });
-    demoBtn.addEventListener('click', ()=>{
-      // demo: close intro and auto-complete quest
-      startBtn.click();
-      setTimeout(()=>{document.querySelector('[data-id="1"]').click()},700);
-    });
-
-    // Quests click
-    quests.addEventListener('click', e=>{
-      const q = e.target.closest('.quest');
-      if(!q) return;
-      const id = q.dataset.id;
-      if(q.classList.contains('locked')){
-        showModal('任務被鎖住', '這個任務是隱藏任務，需要先完成小遊戲或其他條件。');
-        return;
-      }
-      // simulate completing quest
-      showModal('任務詳情', `你查看了：${q.textContent.trim()}\n\n完成後會獲得獎勵！`);
-      // reward animation: increase EXP
-      if(!q.classList.contains('done')){
-        q.classList.add('done');
-        q.style.opacity = 0.7;
-        gainXP(80);
-      }
-    });
-
-    // Works click -> modal
-    works.addEventListener('click', e=>{
-      const w = e.target.closest('.work'); if(!w) return;
-      showModal(w.dataset.title, w.dataset.desc + '\n\n(可在這裡放作品截圖、連結與說明)');
-    });
-
-    function showModal(title, body){
-      modalTitle.textContent = title; modalBody.textContent = body; modal.style.display = 'flex';
-    }
-    closeModal.addEventListener('click', ()=>modal.style.display='none');
-    modal.addEventListener('click', e=>{ if(e.target===modal) modal.style.display='none' });
-
-    // XP system (simple)
-    let XP = 230; let Level = 5;
-    const expText = document.getElementById('expText');
-    function gainXP(n){
-      XP += n; updateExp(); flashAccent();
-    }
-    function updateExp(){
-      // level up every 300 XP
-      while(XP >= 300){ XP -= 300; Level++; }
-      expText.textContent = `Lv. ${Level} · ${XP} XP`;
-    }
-    function flashAccent(){
-      document.documentElement.style.setProperty('--accent','#f97316');
-      setTimeout(()=>document.documentElement.style.setProperty('--accent','#7c3aed'),400);
-    }
-
-    // small keyboard easter egg: press 'k' to toggle hidden quest
-    window.addEventListener('keydown', e=>{
-      if(e.key.toLowerCase()==='k'){
-        const q3 = document.querySelector('[data-id="3"]');
-        if(q3.classList.contains('locked')){ q3.classList.remove('locked'); showModal('密碼解除','你解鎖了隱藏任務！'); }
-        else{ q3.classList.add('locked'); showModal('已鎖定','已重新鎖定任務。'); }
-      }
-    });
-
-    // Small: show intro automatically if first time
-    if(!localStorage.getItem('seenIntro')){ localStorage.setItem('seenIntro','1'); }
-
-    // Accessibility: focus trap for modal (simple)
-    document.addEventListener('focusin', e=>{
-      if(modal.style.display==='flex' && !modal.contains(e.target)) closeModal.focus();
-    });
-
-    // Init
-    updateExp();
-  </script>
+    <script src="script.js"></script>
 </body>
 </html>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    text-align: center;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 20px;
+}
+
+#game-container {
+    margin: 20px auto;
+    text-align: center;
+}
+
+canvas {
+    border: 2px solid #000;
+    background-color: #eee;
+    display: block;
+    margin: 0 auto;
+}
+
+#controls {
+    margin-top: 20px;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    margin: 10px;
+    font-size: 16px;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    padding: 10px;
+    margin-top: 20px;
+}
+// 設定畫布與遊戲環境
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let playerX = 100;
+let playerY = 100;
+let playerSize = 30;
+let speed = 5;
+
+// 初始化遊戲
+function startGame() {
+    setInterval(updateGameArea, 1000 / 60); // 60 FPS
+}
+
+// 更新遊戲區域
+function updateGameArea() {
+    clearCanvas();
+    drawPlayer();
+}
+
+// 清除畫布
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// 畫玩家
+function drawPlayer() {
+    ctx.fillStyle = "#FF6347"; // 玩家顏色
+    ctx.fillRect(playerX, playerY, playerSize, playerSize); // 畫一個方形代表玩家
+}
+
+// 監聽鍵盤事件來控制玩家移動
+document.addEventListener("keydown", function(event) {
+    if (event.key === "ArrowUp") {
+        playerY -= speed; // 向上移動
+    } else if (event.key === "ArrowDown") {
+        playerY += speed; // 向下移動
+    } else if (event.key === "ArrowLeft") {
+        playerX -= speed; // 向左移動
+    } else if (event.key === "ArrowRight") {
+        playerX += speed; // 向右移動
+    }
+});
+
+// 清除畫布
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// 當玩家在畫布上畫畫時
+let isDrawing = false;
+
+canvas.addEventListener('mousedown', () => {
+    isDrawing = true;
+});
+
+canvas.addEventListener('mouseup', () => {
+    isDrawing = false;
+});
+
+canvas.addEventListener('mousemove', (event) => {
+    if (isDrawing) {
+        let x = event.offsetX;
+        let y = event.offsetY;
+        ctx.fillStyle = 'black';
+        ctx.fillRect(x, y, 2, 2); // 畫小點
+    }
+});
