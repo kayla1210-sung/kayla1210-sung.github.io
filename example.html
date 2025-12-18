@@ -1,10 +1,252 @@
 <!DOCTYPE html>
-<html>
- <head>
-   <title>我的網站!!</title>
-   <link rel="icon" href="icon.png">
-  </head>
- <body>
-    yeahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
- </body>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>像素大宅</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+/* ===== 基本介面 ===== */
+body {
+  margin: 0;
+  background: #1b1b1b;
+  color: #eaeaea;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+h1 {
+  margin: 10px 0;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+
+#gameWrapper {
+  position: relative;
+}
+
+canvas {
+  background: #2e2e2e;
+  image-rendering: pixelated;
+  border: 4px solid #555;
+}
+
+/* ===== UI ===== */
+#hint {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ===== 畫畫模式 ===== */
+#paintUI {
+  display: none;
+  margin-top: 6px;
+}
+button {
+  background: #444;
+  color: #eee;
+  border: 1px solid #666;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+button:hover {
+  background: #666;
+}
+</style>
+</head>
+
+<body>
+
+<h1>PIXEL MANOR</h1>
+
+<div id="gameWrapper">
+  <canvas id="game" width="320" height="180"></canvas>
+</div>
+
+<div id="hint">方向鍵 / WASD 移動 ・ E 互動 ・ ESC 離開</div>
+
+<div id="paintUI">
+  <button onclick="clearPaint()">清空畫布</button>
+</div>
+
+<script>
+/* ===== 基本設定 ===== */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const SCALE = 3;
+canvas.style.width = canvas.width * SCALE + "px";
+canvas.style.height = canvas.height * SCALE + "px";
+
+let mode = "game"; // game / paint
+
+/* ===== 玩家 ===== */
+const player = {
+  x: 40,
+  y: 80,
+  w: 8,
+  h: 10,
+  speed: 1.2
+};
+
+/* ===== 鍵盤 ===== */
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+/* ===== 場景（大宅內部） ===== */
+const room = {
+  walls: [
+    {x:0,y:0,w:320,h:10},
+    {x:0,y:170,w:320,h:10},
+    {x:0,y:0,w:10,h:180},
+    {x:310,y:0,w:10,h:180}
+  ],
+  objects: [
+    {x:140,y:70,w:20,h:20,type:"canvas"}
+  ]
+};
+
+/* ===== 繪畫模式畫布 ===== */
+const paintCanvas = document.createElement("canvas");
+paintCanvas.width = 100;
+paintCanvas.height = 60;
+const pctx = paintCanvas.getContext("2d");
+
+/* ===== 遊戲主迴圈 ===== */
+function loop() {
+  if (mode === "game") {
+    updateGame();
+    drawGame();
+  } else {
+    drawPaintMode();
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ===== 更新 ===== */
+function updateGame() {
+  let nx = player.x;
+  let ny = player.y;
+
+  if (keys["ArrowUp"] || keys["w"]) ny -= player.speed;
+  if (keys["ArrowDown"] || keys["s"]) ny += player.speed;
+  if (keys["ArrowLeft"] || keys["a"]) nx -= player.speed;
+  if (keys["ArrowRight"] || keys["d"]) nx += player.speed;
+
+  if (!collide(nx, ny)) {
+    player.x = nx;
+    player.y = ny;
+  }
+
+  if (keys["e"]) checkInteraction();
+}
+
+/* ===== 碰撞 ===== */
+function collide(x, y) {
+  for (let w of room.walls) {
+    if (x < w.x + w.w &&
+        x + player.w > w.x &&
+        y < w.y + w.h &&
+        y + player.h > w.y) return true;
+  }
+  return false;
+}
+
+/* ===== 互動 ===== */
+function checkInteraction() {
+  for (let o of room.objects) {
+    if (rectHit(player, o)) {
+      enterPaintMode();
+    }
+  }
+}
+
+/* ===== 繪製遊戲 ===== */
+function drawGame() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // 地板
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(0,0,320,180);
+
+  // 牆
+  ctx.fillStyle = "#555";
+  room.walls.forEach(w => ctx.fillRect(w.x,w.y,w.w,w.h));
+
+  // 物件（畫架）
+  ctx.fillStyle = "#c2a060";
+  room.objects.forEach(o => ctx.fillRect(o.x,o.y,o.w,o.h));
+
+  // 玩家（像素人）
+  drawPlayer();
+}
+
+/* ===== 畫玩家 ===== */
+function drawPlayer() {
+  ctx.fillStyle = "#ffd966"; // 頭
+  ctx.fillRect(player.x+2, player.y, 4, 4);
+
+  ctx.fillStyle = "#6fa8dc"; // 身體
+  ctx.fillRect(player.x+2, player.y+4, 4, 6);
+
+  ctx.fillStyle = "#444"; // 腳
+  ctx.fillRect(player.x+2, player.y+10, 2, 2);
+  ctx.fillRect(player.x+4, player.y+10, 2, 2);
+}
+
+/* ===== 進入畫畫模式 ===== */
+function enterPaintMode() {
+  mode = "paint";
+  document.getElementById("paintUI").style.display = "block";
+}
+
+/* ===== 畫畫模式 ===== */
+let drawing = false;
+canvas.addEventListener("mousedown", e => {
+  if (mode === "paint") drawing = true;
+});
+canvas.addEventListener("mouseup", () => drawing = false);
+canvas.addEventListener("mousemove", e => {
+  if (mode !== "paint" || !drawing) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / SCALE);
+  const y = Math.floor((e.clientY - rect.top) / SCALE);
+  pctx.fillStyle = "#000";
+  pctx.fillRect(x/3, y/3, 1, 1);
+});
+
+function drawPaintMode() {
+  ctx.fillStyle = "#eee";
+  ctx.fillRect(0,0,320,180);
+  ctx.drawImage(paintCanvas, 110, 60);
+}
+
+/* ===== 離開畫畫 ===== */
+window.addEventListener("keydown", e => {
+  if (e.key === "Escape" && mode === "paint") {
+    mode = "game";
+    document.getElementById("paintUI").style.display = "none";
+  }
+});
+
+function clearPaint() {
+  pctx.clearRect(0,0,paintCanvas.width,paintCanvas.height);
+}
+
+/* ===== 工具 ===== */
+function rectHit(a,b) {
+  return a.x < b.x + b.w &&
+         a.x + a.w > b.x &&
+         a.y < b.y + b.h &&
+         a.y + a.h > b.y;
+}
+
+loop();
+</script>
+
+</body>
 </html>
