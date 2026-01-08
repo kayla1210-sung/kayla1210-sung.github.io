@@ -1,153 +1,152 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>像素城堡遊戲</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>反應力測試：別按錯！</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    #game {
+      margin-top: 40px;
+    }
+
+    #box {
+      width: 150px;
+      height: 150px;
+      margin: 30px auto;
+      border-radius: 12px;
+      display: none;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    #box:active {
+      transform: scale(0.95);
+    }
+
+    .green { background: #2ecc71; }
+    .red { background: #e74c3c; }
+    .blue { background: #3498db; }
+
+    #info {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>像素城堡探索遊戲</h1>
-        <p>自由探索城堡中的每個房間，玩小遊戲，創作畫作！</p>
-    </header>
 
-    <div id="game-container">
-        <!-- 遊戲畫布 -->
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
-        <div id="controls">
-            <button onclick="startGame()">開始遊戲</button>
-            <button onclick="clearCanvas()">清除畫布</button>
-        </div>
-    </div>
+  <h1>🎮 反應力測試：別按錯！</h1>
 
-    <footer>
-        <p>© 2025 像素遊戲工作室</p>
-    </footer>
+  <div id="info">
+    分數：<span id="score">0</span>　
+    生命：<span id="life">3</span>
+  </div>
 
-    <script src="script.js"></script>
+  <div id="game">
+    <div id="box"></div>
+    <button onclick="startGame()">開始遊戲</button>
+  </div>
+
+  <script>
+    const box = document.getElementById("box");
+    const scoreText = document.getElementById("score");
+    const lifeText = document.getElementById("life");
+
+    let score = 0;
+    let life = 3;
+    let state = "";
+    let canClick = false;
+    let speed = 1200;
+
+    function startGame() {
+      score = 0;
+      life = 3;
+      speed = 1200;
+      updateUI();
+      nextRound();
+    }
+
+    function nextRound() {
+      if (life <= 0) {
+        alert("遊戲結束！你的分數是：" + score);
+        box.style.display = "none";
+        return;
+      }
+
+      box.style.display = "none";
+      canClick = false;
+
+      setTimeout(() => {
+        const rand = Math.random();
+        box.className = "";
+
+        if (rand < 0.4) {
+          state = "green";
+          box.classList.add("green");
+          canClick = true;
+        } else if (rand < 0.7) {
+          state = "red";
+          box.classList.add("red");
+          canClick = false;
+        } else {
+          state = "blue";
+          box.classList.add("blue");
+          canClick = false;
+          setTimeout(() => canClick = true, 1000);
+        }
+
+        box.style.display = "block";
+
+        setTimeout(() => {
+          if (canClick) {
+            life--;
+            updateUI();
+          }
+          nextRound();
+        }, speed);
+
+      }, 400);
+    }
+
+    box.addEventListener("click", () => {
+      if (state === "green" && canClick) {
+        score++;
+      } else if (state === "blue" && canClick) {
+        score += 2;
+      } else {
+        life--;
+      }
+
+      speed = Math.max(400, speed - 30);
+      updateUI();
+      nextRound();
+    });
+
+    function updateUI() {
+      scoreText.textContent = score;
+      lifeText.textContent = life;
+    }
+  </script>
+
 </body>
 </html>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    text-align: center;
-}
-
-header {
-    background-color: #333;
-    color: #fff;
-    padding: 20px;
-}
-
-#game-container {
-    margin: 20px auto;
-    text-align: center;
-}
-
-canvas {
-    border: 2px solid #000;
-    background-color: #eee;
-    display: block;
-    margin: 0 auto;
-}
-
-#controls {
-    margin-top: 20px;
-}
-
-button {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-    margin: 10px;
-    font-size: 16px;
-}
-
-button:hover {
-    background-color: #45a049;
-}
-
-footer {
-    background-color: #333;
-    color: white;
-    padding: 10px;
-    margin-top: 20px;
-}
-// 設定畫布與遊戲環境
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-let playerX = 100;
-let playerY = 100;
-let playerSize = 30;
-let speed = 5;
-
-// 初始化遊戲
-function startGame() {
-    setInterval(updateGameArea, 1000 / 60); // 60 FPS
-}
-
-// 更新遊戲區域
-function updateGameArea() {
-    clearCanvas();
-    drawPlayer();
-}
-
-// 清除畫布
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-// 畫玩家
-function drawPlayer() {
-    ctx.fillStyle = "#FF6347"; // 玩家顏色
-    ctx.fillRect(playerX, playerY, playerSize, playerSize); // 畫一個方形代表玩家
-}
-
-// 監聽鍵盤事件來控制玩家移動
-document.addEventListener("keydown", function(event) {
-    if (event.key === "ArrowUp") {
-        playerY -= speed; // 向上移動
-    } else if (event.key === "ArrowDown") {
-        playerY += speed; // 向下移動
-    } else if (event.key === "ArrowLeft") {
-        playerX -= speed; // 向左移動
-    } else if (event.key === "ArrowRight") {
-        playerX += speed; // 向右移動
-    }
-});
-
-// 清除畫布
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-// 當玩家在畫布上畫畫時
-let isDrawing = false;
-
-canvas.addEventListener('mousedown', () => {
-    isDrawing = true;
-});
-
-canvas.addEventListener('mouseup', () => {
-    isDrawing = false;
-});
-
-canvas.addEventListener('mousemove', (event) => {
-    if (isDrawing) {
-        let x = event.offsetX;
-        let y = event.offsetY;
-        ctx.fillStyle = 'black';
-        ctx.fillRect(x, y, 2, 2); // 畫小點
-    }
-});
